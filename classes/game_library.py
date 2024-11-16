@@ -7,7 +7,8 @@ class Game_Library:
         self.games=[]
         self.load_game()
         
-
+        #functions
+        
         def load_game(self):
             try:
                 with open(self.filename,"r") as file:
