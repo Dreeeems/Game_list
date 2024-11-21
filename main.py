@@ -1,9 +1,11 @@
 import tkinter as tk
+import customtkinter
 from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
 import os
 from classes.game import Game
 from classes.game_library import Game_Library
+
 
 class GameApp:
     def __init__(self, root):
@@ -11,59 +13,134 @@ class GameApp:
         self.library = Game_Library()
         self.root.title("Game App")
         self.image_path = None
+        self.current_frame = None
+
+        # Root layout
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(1, weight=1)
+
+        # Side menu
+        self.side_menu = customtkinter.CTkFrame(root, width=200)
+        self.side_menu.grid(row=0, column=0, sticky="ns")
+        self.side_menu.grid_rowconfigure(0, weight=1)
+
+        customtkinter.CTkButton(self.side_menu, text="Games", command=self.show_games_page).pack(fill="x", pady=10, padx=5)
+        customtkinter.CTkButton(self.side_menu, text="Add New Game", command=self.show_add_game_page).pack(fill="x", pady=10, padx=5)
+
+        # Main area
+        self.main_frame = customtkinter.CTkFrame(root)
+        self.main_frame.grid(row=0, column=1, sticky="nsew")
+
+        # Initialize with the games page
+        self.show_games_page()
+
+    def show_frame(self, frame_class):
+        """Switch to a new frame."""
+        if self.current_frame:
+            self.current_frame.destroy()
+        self.current_frame = frame_class(self.main_frame, self)
+        self.current_frame.pack(fill="both", expand=True)
+
+    def show_games_page(self):
+        """Display the list of games."""
+        self.show_frame(GamesPage)
+
+    def show_add_game_page(self):
+        """Display the add game page."""
+        self.show_frame(AddGamePage)
 
 
-        tk.Label(root, text="Game Name").grid(row=0, column=0)
-        self.name_entry = tk.Entry(root)
-        self.name_entry.grid(row=0, column=1)
+class GamesPage(customtkinter.CTkFrame):
+    def __init__(self, parent, app):
+        super().__init__(parent)
+        self.app = app
 
-        tk.Label(root, text="Platform").grid(row=1, column=0)
-        self.platform_entry = tk.Entry(root)
-        self.platform_entry.grid(row=1, column=1)
+        customtkinter.CTkLabel(self, text="Games Library", font=("Arial", 20)).pack(pady=10)
 
-        tk.Label(root, text="Genre").grid(row=2, column=0)
-        self.genre_entry = tk.Entry(root)
-        self.genre_entry.grid(row=2, column=1)
-
-        tk.Label(root, text="Status").grid(row=3, column=0)
-        self.status_entry = tk.Entry(root)
-        self.status_entry.grid(row=3, column=1)
-
-        tk.Label(root, text="Rate").grid(row=4, column=0)
-        self.rate_entry = tk.Entry(root)
-        self.rate_entry.grid(row=4, column=1)
-
-        tk.Label(root, text="Comment").grid(row=5, column=0)
-        self.comment_entry = tk.Entry(root)
-        self.comment_entry.grid(row=5, column=1)
-
-        tk.Label(root, text="Played Time").grid(row=6, column=0)
-        self.played_time_entry = tk.Entry(root)
-        self.played_time_entry.grid(row=6, column=1)
-
-
-        self.image_button = tk.Button(root, text="Add an image", command=self.select_image)
-        self.image_button.grid(row=7, column=1, columnspan=2)
-
-        self.add_game_button = tk.Button(root, text="Add a game", command=self.add_game)
-        self.add_game_button.grid(row=8, column=1, columnspan=2)
-
-        # Liste des jeux
-        self.game_list = tk.Listbox(root, width=50)
-        self.game_list.grid(row=0, column=3, rowspan=8)
+        self.game_list = tk.Listbox(self, width=50)
+        self.game_list.pack(pady=20)
         self.game_list.bind('<<ListboxSelect>>', self.display_game_info)
 
         self.load_game_list()
 
     def load_game_list(self):
         self.game_list.delete(0, tk.END)
-        for game in self.library.games:
+        for game in self.app.library.games:
             self.game_list.insert(tk.END, game.name)
+
+    def display_game_info(self, event):
+        selected_index = self.game_list.curselection()
+        if not selected_index:
+            return
+        game = self.app.library.games[selected_index[0]]
+
+        info_window = tk.Toplevel(self)
+        info_window.title(game.name)
+
+        customtkinter.CTkLabel(info_window, text=f"Name: {game.name}").pack()
+        customtkinter.CTkLabel(info_window, text=f"Platform: {game.platform}").pack()
+        customtkinter.CTkLabel(info_window, text=f"Genre: {game.genre}").pack()
+        customtkinter.CTkLabel(info_window, text=f"Status: {game.status}").pack()
+        customtkinter.CTkLabel(info_window, text=f"Rate: {game.rating}").pack()
+        customtkinter.CTkLabel(info_window, text=f"Comments: {game.comments}").pack()
+        customtkinter.CTkLabel(info_window, text=f"Played Time: {game.time_played} hours").pack()
+
+        if game.image_path and os.path.exists(game.image_path):
+            img = Image.open(game.image_path)
+            img = img.resize((150, 150))
+            photo = ImageTk.PhotoImage(img)
+            customtkinter.CTkLabel(info_window, image=photo).pack()
+            info_window.image = photo
+        else:
+            customtkinter.CTkLabel(info_window, text="No image available").pack()
+
+
+class AddGamePage(customtkinter.CTkFrame):
+    def __init__(self, parent, app):
+        super().__init__(parent)
+        self.app = app
+        self.image_path = None
+
+        customtkinter.CTkLabel(self, text="Add New Game", font=("Arial", 20)).grid(row=0, column=0, columnspan=2, pady=10)
+
+        customtkinter.CTkLabel(self, text="Game Name").grid(row=1, column=0)
+        self.name_entry = customtkinter.CTkEntry(self)
+        self.name_entry.grid(row=1, column=1)
+
+        customtkinter.CTkLabel(self, text="Platform").grid(row=2, column=0)
+        self.platform_entry = customtkinter.CTkEntry(self)
+        self.platform_entry.grid(row=2, column=1)
+
+        customtkinter.CTkLabel(self, text="Genre").grid(row=3, column=0)
+        self.genre_entry = customtkinter.CTkEntry(self)
+        self.genre_entry.grid(row=3, column=1)
+
+        customtkinter.CTkLabel(self, text="Status").grid(row=4, column=0)
+        self.status_entry = customtkinter.CTkEntry(self)
+        self.status_entry.grid(row=4, column=1)
+
+        customtkinter.CTkLabel(self, text="Rate").grid(row=5, column=0)
+        self.rate_entry = customtkinter.CTkEntry(self)
+        self.rate_entry.grid(row=5, column=1)
+
+        customtkinter.CTkLabel(self, text="Comment").grid(row=6, column=0)
+        self.comment_entry = customtkinter.CTkEntry(self)
+        self.comment_entry.grid(row=6, column=1)
+
+        customtkinter.CTkLabel(self, text="Played Time").grid(row=7, column=0)
+        self.played_time_entry = customtkinter.CTkEntry(self)
+        self.played_time_entry.grid(row=7, column=1)
+
+        self.image_button = customtkinter.CTkButton(self, text="Add an image", command=self.select_image)
+        self.image_button.grid(row=8, column=0, columnspan=2, pady=10)
+
+        self.add_game_button = customtkinter.CTkButton(self, text="Add Game", command=self.add_game)
+        self.add_game_button.grid(row=9, column=0, columnspan=2, pady=10)
 
     def select_image(self):
         self.image_path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg *.png")])
         if self.image_path:
-            messagebox.showinfo("Image added", f"Image added : {self.image_path}")
+            messagebox.showinfo("Image added", f"Image added: {self.image_path}")
 
     def add_game(self):
         name = self.name_entry.get()
@@ -75,42 +152,15 @@ class GameApp:
         time_played = self.played_time_entry.get()
 
         if not name or not platform:
-            messagebox.showwarning("Erreur", "Le nom et la plateforme sont obligatoires.")
+            messagebox.showwarning("Error", "Name and Platform are mandatory.")
             return
-        
+
         game = Game(name, platform, genre, status, rating, comments, time_played, self.image_path)
-        self.library.add_game(game)
-        
-        self.load_game_list()
-        messagebox.showinfo("Succès", f"Le jeu '{name}' a été ajouté !")
-
-    def display_game_info(self, event):
-        selected_index = self.game_list.curselection()
-        if not selected_index:
-            return
-        game = self.library.games[selected_index[0]]
-
-        info_window = tk.Toplevel(self.root)
-        info_window.title(game.name)
-        
-        tk.Label(info_window, text=f"Name: {game.name}").pack()
-        tk.Label(info_window, text=f"Platform: {game.platform}").pack()
-        tk.Label(info_window, text=f"Genre: {game.genre}").pack()
-        tk.Label(info_window, text=f"Status: {game.status}").pack()
-        tk.Label(info_window, text=f"Rate: {game.rating}").pack()
-        tk.Label(info_window, text=f"Comments: {game.comments}").pack()
-        tk.Label(info_window, text=f"Played Time: {game.time_played} hours").pack()
-
-        if game.image_path and os.path.exists(game.image_path):
-            img = Image.open(game.image_path)
-            img = img.resize((150, 150))
-            photo = ImageTk.PhotoImage(img)
-            tk.Label(info_window, image=photo).pack()
-            info_window.image = photo 
-        else:
-            tk.Label(info_window, text="No image available").pack()
+        self.app.library.add_game(game)
+        self.app.show_games_page()
+        messagebox.showinfo("Success", f"The game '{name}' has been added!")
 
 
-root = tk.Tk()
+root = customtkinter.CTk()
 app = GameApp(root)
 root.mainloop()
