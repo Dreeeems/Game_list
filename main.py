@@ -77,13 +77,13 @@ class GamesPage(customtkinter.CTkFrame):
         info_window = tk.Toplevel(self)
         info_window.title(game.name)
 
-        customtkinter.CTkLabel(info_window, text=f"Name: {game.name}").pack()
-        customtkinter.CTkLabel(info_window, text=f"Platform: {game.platform}").pack()
-        customtkinter.CTkLabel(info_window, text=f"Genre: {game.genre}").pack()
-        customtkinter.CTkLabel(info_window, text=f"Status: {game.status}").pack()
-        customtkinter.CTkLabel(info_window, text=f"Rate: {game.rating}").pack()
-        customtkinter.CTkLabel(info_window, text=f"Comments: {game.comments}").pack()
-        customtkinter.CTkLabel(info_window, text=f"Played Time: {game.time_played} hours").pack()
+        customtkinter.CTkLabel(info_window, text=f"Name: {game.name}",text_color="black").pack()
+        customtkinter.CTkLabel(info_window, text=f"Platform: {game.platform}",text_color="black").pack()
+        customtkinter.CTkLabel(info_window, text=f"Genre: {game.genre}",text_color="black").pack()
+        customtkinter.CTkLabel(info_window, text=f"Status: {game.status}",text_color="black").pack()
+        customtkinter.CTkLabel(info_window, text=f"Rate: {game.rating}",text_color="black").pack()
+        customtkinter.CTkLabel(info_window, text=f"Comments: {game.comments}",text_color="black").pack()
+        customtkinter.CTkLabel(info_window, text=f"Played Time: {game.time_played} hours",text_color="black").pack()
 
         if game.image_path and os.path.exists(game.image_path):
             img = Image.open(game.image_path)
